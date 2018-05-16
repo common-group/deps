@@ -1,0 +1,34 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: comum/docker-build-env:latest
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 17.05.0-ce
+  push_docker:
+    docker:
+      - image: comum/docker-build-env:latest
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 17.05.0-ce
+      # with credentials stored in the UI
+      - run: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      # build the application container
+      - run: docker build -t comum/deps:latest .
+      # deploy the container
+      - run: docker push comum/deps:latest
+
+workflows:
+  version: 2
+  build-and-push:
+    jobs:
+      - build
+      - push_docker:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
